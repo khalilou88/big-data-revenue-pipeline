@@ -11,9 +11,11 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
-    env:
-      HADOOP_VERSION: 3.3.6
-      HADOOP_HOME: ${{ github.workspace }}/hadoop
+    services:
+      hadoop:
+        image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+        ports:
+          - 9000:9000
 
     steps:
       - name: Checkout code
@@ -25,22 +27,6 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: Download and extract Hadoop
-        run: |
-          wget https://downloads.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz
-          tar -xzf hadoop-${HADOOP_VERSION}.tar.gz
-          mv hadoop-${HADOOP_VERSION} $HADOOP_HOME
-
-      - name: Set up environment variables
-        run: |
-          echo "HADOOP_HOME=$HADOOP_HOME" >> $GITHUB_ENV
-          echo "$HADOOP_HOME/bin" >> $GITHUB_PATH
-          echo "$HADOOP_HOME/sbin" >> $GITHUB_PATH
-
-      - name: Check Hadoop CLI
-        run: |
-          hdfs version
-
       - name: Cache Maven dependencies
         uses: actions/cache@v3
         with:
@@ -51,6 +37,10 @@ jobs:
       - name: Build Project
         run: |
           mvn clean package
+
+      - name: Check Hadoop CLI
+        run: |
+          hdfs version
 
       - name: Setup Environment
         run: |
