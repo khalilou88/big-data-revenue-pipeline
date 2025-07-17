@@ -1,0 +1,46 @@
+name: Big Data Revenue Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build Project
+        run: |
+          mvn clean package
+
+      - name: Setup Environment
+        run: |
+          ./scripts/shell/setup_environment.sh
+
+      - name: Deploy to Cluster
+        run: |
+          ./scripts/shell/deploy_to_cluster.sh
+
+      - name: Run Pipeline
+        run: |
+          ./scripts/shell/run_pipeline.sh
+
