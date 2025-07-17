@@ -1,0 +1,23 @@
+<coordinator-app name="revenue-calculation-coordinator"
+                 frequency="${coord:days(1)}"
+                 start="2024-01-01T00:00Z"
+                 end="2024-12-31T23:59Z"
+                 timezone="UTC"
+                 xmlns="uri:oozie:coordinator:0.4">
+
+    <action>
+        <workflow>
+            <app-path>${wf_application_path}</app-path>
+            <configuration>
+                <property>
+                    <name>inputPath</name>
+                    <value>/user/data/sales</value>
+                </property>
+                <property>
+                    <name>outputPath</name>
+                    <value>/user/data/output/revenue_results_csv</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

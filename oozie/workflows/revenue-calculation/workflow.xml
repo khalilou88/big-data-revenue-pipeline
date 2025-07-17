@@ -1,0 +1,70 @@
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="revenue-calculation-workflow">
+    <start to="create-hive-tables"/>
+
+    <!-- Create Hive Tables -->
+    <action name="create-hive-tables">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <script>external_sales_table.hql</script>
+            <script>internal_revenue_table.hql</script>
+        </hive>
+        <ok to="spark-revenue-calculation"/>
+        <error to="fail"/>
+    </action>
+
+    <!-- Spark Revenue Calculation -->
+    <action name="spark-revenue-calculation">
+        <spark xmlns="uri:oozie:spark-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <master>yarn</master>
+            <mode>cluster</mode>
+            <name>ProductRevenueCalculator</name>
+            <class>RevenueCalculator</class>
+            <jar>revenue-calculator.jar</jar>
+            <spark-opts>--num-executors 4 --executor-cores 2 --executor-memory 2g</spark-opts>
+        </spark>
+        <ok to="export-results"/>
+        <error to="fail"/>
+    </action>
+
+    <!-- Export Results -->
+    <action name="export-results">
+        <spark xmlns="uri:oozie:spark-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <master>yarn</master>
+            <mode>cluster</mode>
+            <name>ExportToCSV</name>
+            <file>export_to_csv.py</file>
+            <spark-opts>--num-executors 2 --executor-cores 1 --executor-memory 1g</spark-opts>
+        </spark>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name="fail">
+        <message>Workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+
+    <end name="end"/>
+</workflow-app>
