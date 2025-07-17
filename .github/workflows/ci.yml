@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      HADOOP_VERSION: 3.3.4
+      HADOOP_VERSION: 3.3.6
       HADOOP_HOME: ${{ github.workspace }}/hadoop
 
     steps:
